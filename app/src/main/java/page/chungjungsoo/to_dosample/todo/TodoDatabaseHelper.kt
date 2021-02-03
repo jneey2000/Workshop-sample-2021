@@ -13,16 +13,18 @@ class TodoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, 
         private val ID = "id"
         private val TITLE = "Title"
         private val DESC = "Desciption"
+        private val DATE = "Date"
         private val FIN = "Finished"
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
         // Create Database
-        val createTable =
+        val createTable = // todo table 처음 만드는(생성) 하는 곳 , sql
             "CREATE TABLE $TABLE_NAME" +
                     "($ID INTEGER PRIMARY KEY," +
                     "$TITLE TEXT," +
                     "$DESC TEXT," +
+                    "$DATE TEXT," + // 쉼표 안써서 오류남
                     "$FIN INTEGER DEFAULT 0)"
 
         db?.execSQL(createTable)
@@ -30,13 +32,14 @@ class TodoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, 
 
     override fun onUpgrade(p0: SQLiteDatabase?, p1: Int, p2: Int) { }
 
-    fun addTodo(todo: Todo) : Boolean {
+    fun addTodo(todo: Todo) : Boolean { // todotable에 추가하는 것
         // Add to-do to database
         val db = this.writableDatabase
         val values = ContentValues()
 
         values.put(TITLE, todo.title)
         values.put(DESC, todo.description)
+        values.put(DATE, todo.date) // 위에서 create로 테이블 만들어짐, 4개가 한 덩어리로 데베에 쌓는과정. todo에  put
         values.put(FIN, booleanToInteger(todo.finished))
 
         val _success = db.insert(TABLE_NAME, null, values)
@@ -62,6 +65,7 @@ class TodoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, 
 
         values.put(TITLE, todo.title)
         values.put(DESC, todo.description)
+        values.put(DATE, todo.date) // 수정
         values.put(FIN, booleanToInteger(todo.finished))
 
         val result = db.update(TABLE_NAME, values, "$ID IN(SELECT $ID FROM $TABLE_NAME LIMIT 1 OFFSET $position)", null) > 0
@@ -78,6 +82,7 @@ class TodoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, 
         val cursor = db.rawQuery(selectALLQuery, null)
         var title : String
         var desciption : String
+        var date : String // DB helper 관리하는 파일 하나
         var finished : Boolean
 
         if (cursor != null) {
@@ -85,9 +90,10 @@ class TodoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, 
                 do {
                     title = cursor.getString(cursor.getColumnIndex(TITLE))
                     desciption = cursor.getString(cursor.getColumnIndex(DESC))
+                    date = cursor.getString(cursor.getColumnIndex(DATE)) // 수정, 커서는 값을 가리키는 부분
                     finished = integerToBoolean(cursor.getInt(cursor.getColumnIndex(FIN)))
 
-                    allTodo.add(Todo(title, desciption, finished))
+                    allTodo.add(Todo(title, desciption, date, finished)) // date 빨간 줄 수정
                 } while (cursor.moveToNext())
             }
         }
